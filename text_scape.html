@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TextScape - Knowledge Explorer</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+    }
+    
+    .sidebar {
+      width: 300px;
+      background: #f5f5f5;
+      padding: 20px;
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+    
+    .main-view {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #fafafa;
+    }
+    
+    .upload-area {
+      border: 2px dashed #ccc;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+      border-radius: 5px;
+    }
+    
+    .messages {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      z-index: 100;
+    }
+    
+    .message {
+      padding: 10px 15px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      background: #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      transition: opacity 0.3s;
+    }
+    
+    .message-info {
+      border-left: 4px solid #2196F3;
+    }
+    
+    .message-success {
+      border-left: 4px solid #4CAF50;
+    }
+    
+    .message-error {
+      border-left: 4px solid #F44336;
+    }
+    
+    .controls {
+      margin-top: 20px;
+    }
+    
+    input, button, textarea {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+    
+    button {
+      background: #4285f4;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    
+    button:hover {
+      background: #3367d6;
+    }
+
+    .detail-panel {
+      display: none;
+    }
+    
+    .app-description {
+      margin-top: 30px;
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+    }
+    
+    h3 {
+      margin-top: 15px;
+      margin-bottom: 10px;
+      color: #333;
+    }
+    
+    .sidebar p {
+      font-size: 14px;
+      line-height: 1.5;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar">
+      <h2>TextScape</h2>
+      <div class="upload-area">
+        <p>Upload your text files</p>
+        <input type="file" id="fileUpload" multiple accept=".txt,.md">
+      </div>
+      
+      <div class="controls">
+        <input type="text" id="searchInput" placeholder="Search within documents...">
+        
+        <h3>Add Text Directly</h3>
+        <textarea id="textInput" placeholder="Enter your text here..."></textarea>
+        <button id="addTextBtn">Add Text to Knowledge Graph</button>
+      </div>
+      
+      <div class="app-description">
+        <h3>About TextScape</h3>
+        <p>TextScape is a knowledge exploration tool that helps you visualize connections between ideas in your documents.</p>
+        
+        <h3>How It Works</h3>
+        <p>Upload text files or paste text directly. TextScape breaks your content into semantic units and builds associations between related concepts using confabulation-inspired algorithms.</p>
+        
+        <h3>Exploring the Graph</h3>
+        <p>Each node represents a fragment of text. Connected nodes share related concepts or ideas. Click on a node to see its content and explore related information.</p>
+        
+        <h3>Visual Guide</h3>
+        <p><span style="color:#ff3e00">●</span> Selected node</p>
+        <p><span style="color:#ff9e00">●</span> Strongly related content</p>
+        <p><span style="color:#ffce00">●</span> Weakly related content</p>
+        <p><span style="color:steelblue">●</span> Unrelated content</p>
+        
+        <h3>Tips</h3>
+        <p>• Drag nodes to rearrange the visualization</p>
+        <p>• Use the search to find specific content</p>
+        <p>• Zoom and pan to navigate larger knowledge graphs</p>
+      </div>
+    </div>
+    
+    <div class="main-view" id="graphContainer">
+      <!-- D3 visualization will be rendered here -->
+    </div>
+    
+    <div class="messages" id="messages">
+      <!-- Messages will appear here -->
+    </div>
+  </div>
+
+  <script>
+    // TextScape - A Confabulation-Inspired Text Knowledge Network
+    // Modular Architecture for Rapid Prototyping
+
+    /**
+     * SYSTEM ARCHITECTURE OVERVIEW
+     * 
+     * This skeleton implements a confabulation-inspired text exploration system
+     * with modular components for easy expansion and rapid prototyping.
+     */
+
+    // =====================================================================
+    // 1. DOCUMENT PROCESSING PIPELINE
+    // =====================================================================
+
+    const TextProcessor = {
+      // Ingests various document formats (expandable)
+      ingestDocument: async (file, type) => {
+        switch(type) {
+          case 'text':
+            return TextProcessor.processText(await file.text());
+          case 'markdown':
+            return TextProcessor.processMarkdown(await file.text());
+          // Future expansion: JSON, HTML, PDF, etc.
+          default:
+            throw new Error(`Unsupported file type: ${type}`);
+        }
+      },
+      
+      // Process raw text input
+      processRawText: (text) => {
+        return TextProcessor.processText(text);
+      },
+      
+      // Breaks text into semantic "knowledge units"
+      processText: (text) => {
+        // Basic segmentation by paragraphs for prototype
+        const paragraphs = text.split(/\n\s*\n/);
+        
+        // Create knowledge units with basic attributes
+        return paragraphs.map((content, id) => ({
+          id: `ku-${Date.now()}-${id}`, // Ensure unique IDs
+          content: content.trim(),
+          tokens: TextProcessor.extractTokens(content),
+          entities: TextProcessor.extractEntities(content),
+          // Future: more advanced NLP attributes
+        }));
+      },
+      
+      // Process markdown with awareness of headers, lists, etc.
+      processMarkdown: (text) => {
+        // Simplified for prototype - would use a proper MD parser
+        return TextProcessor.processText(text);
+      },
+      
+      // Extract key tokens for association building
+      extractTokens: (text) => {
+        // Simple tokenization for prototype
+        // Would use proper NLP libs in real implementation
+        return text.toLowerCase()
+          .replace(/[^\w\s]/g, '')
+          .split(/\s+/)
+          .filter(word => word.length > 3) // Filter stop words naively
+          .slice(0, 50); // Limit tokens for prototype
+      },
+      
+      // Basic named entity extraction
+      extractEntities: (text) => {
+        // Placeholder - would use NER from spaCy or similar
+        const simplePeopleRegex = /[A-Z][a-z]+ [A-Z][a-z]+/g;
+        return (text.match(simplePeopleRegex) || []);
+      }
+    };
+
+    // =====================================================================
+    // 2. CONFABULATION ENGINE - Core Association Logic
+    // =====================================================================
+
+    const ConfabulationEngine = {
+      // Generate vector embeddings for knowledge units
+      generateEmbeddings: (knowledgeUnits) => {
+        // Placeholder - would use proper embedding model
+        // For prototype: simple TF-IDF style representation
+        const allTokens = new Set();
+        knowledgeUnits.forEach(unit => {
+          unit.tokens.forEach(token => allTokens.add(token));
+        });
+        
+        const tokenIndex = Array.from(allTokens);
+        
+        return knowledgeUnits.map(unit => {
+          // Create simple vector representation
+          const vector = new Array(tokenIndex.length).fill(0);
+          unit.tokens.forEach(token => {
+            const idx = tokenIndex.indexOf(token);
+            if (idx >= 0) vector[idx] += 1;
+          });
+          return {
+            ...unit,
+            vector
+          };
+        });
+      },
+      
+      // Build association matrix between knowledge units
+      buildAssociationMatrix: (embeddedUnits) => {
+        const associationMatrix = [];
+        
+        for (let i = 0; i < embeddedUnits.length; i++) {
+          associationMatrix[i] = [];
+          for (let j = 0; j < embeddedUnits.length; j++) {
+            if (i === j) {
+              associationMatrix[i][j] = 0; // No self-loops
+              continue;
+            }
+            
+            // Cosine similarity between vectors
+            // (Simplified for prototype)
+            const similarity = ConfabulationEngine.cosineSimilarity(
+              embeddedUnits[i].vector, 
+              embeddedUnits[j].vector
+            );
+            
+            // Only create links above threshold (confabulation principle)
+            associationMatrix[i][j] = similarity > 0.3 ? similarity : 0;
+          }
+        }
+        
+        return associationMatrix;
+      },
+      
+      // Simplified cosine similarity for prototype
+      cosineSimilarity: (vecA, vecB) => {
+        let dotProduct = 0;
+        let normA = 0;
+        let normB = 0;
+        
+        for (let i = 0; i < vecA.length; i++) {
+          dotProduct += vecA[i] * vecB[i];
+          normA += vecA[i] * vecA[i];
+          normB += vecB[i] * vecB[i];
+        }
+        
+        if (normA === 0 || normB === 0) return 0;
+        return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+      },
+      
+      // Convert matrix to graph structure for visualization
+      generateKnowledgeGraph: (units, matrix) => {
+        const nodes = units.map(unit => ({
+          id: unit.id,
+          label: unit.content.substring(0, 50) + '...',
+          content: unit.content,
+          // Additional attributes for rendering
+          size: unit.tokens.length / 5 // Size based on content length
+        }));
+        
+        const links = [];
+        for (let i = 0; i < matrix.length; i++) {
+          for (let j = 0; j < matrix[i].length; j++) {
+            if (matrix[i][j] > 0) {
+              links.push({
+                source: units[i].id,
+                target: units[j].id,
+                strength: matrix[i][j]
+              });
+            }
+          }
+        }
+        
+        return { nodes, links };
+      },
+      
+      // Simulate neural activation spreading (confabulation principle)
+      activateNodes: (graph, seedNodeId, threshold = 0.3, steps = 2) => {
+        // Initialize activation levels
+        const activation = {};
+        graph.nodes.forEach(node => {
+          activation[node.id] = node.id === seedNodeId ? 1.0 : 0.0;
+        });
+        
+        // Create adjacency map for quick lookup
+        const adjacencyMap = {};
+        graph.links.forEach(link => {
+          if (!adjacencyMap[link.source]) adjacencyMap[link.source] = [];
+          adjacencyMap[link.source].push({
+            target: link.target,
+            strength: link.strength
+          });
+        });
+        
+        // Simulate activation spreading for N steps
+        for (let step = 0; step < steps; step++) {
+          const newActivation = {...activation};
+          
+          // For each node with activation
+          Object.keys(activation).forEach(nodeId => {
+            if (activation[nodeId] <= threshold) return;
+            
+            // Spread to connected nodes
+            const connections = adjacencyMap[nodeId] || [];
+            connections.forEach(conn => {
+              newActivation[conn.target] = Math.max(
+                newActivation[conn.target],
+                activation[nodeId] * conn.strength
+              );
+            });
+          });
+          
+          // Update activation levels
+          Object.assign(activation, newActivation);
+        }
+        
+        return activation;
+      }
+    };
+
+    // =====================================================================
+    // 3. VISUALIZATION LAYER - D3-based Network Visualization
+    // =====================================================================
+
+    class TextScapeVisualizer {
+      constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.width = this.container.clientWidth;
+        this.height = this.container.clientHeight;
+        this.graph = null;
+        
+        // D3 force simulation
+        this.simulation = null;
+        
+        // Selection state
+        this.selectedNode = null;
+        this.nodeActivation = {};
+      }
+      
+      initializeVisualization() {
+        // Create SVG container
+        this.svg = d3.select(this.container)
+          .append("svg")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("viewBox", [0, 0, this.width, this.height]);
+          
+        // Add zoom behavior
+        this.svg.call(d3.zoom()
+          .extent([[0, 0], [this.width, this.height]])
+          .scaleExtent([0.1, 8])
+          .on("zoom", event => {
+            this.graphContainer.attr("transform", event.transform);
+          }));
+        
+        // Create container for graph elements
+        this.graphContainer = this.svg.append("g");
+        
+        // Create link and node groups
+        this.linkGroup = this.graphContainer.append("g").attr("class", "links");
+        this.nodeGroup = this.graphContainer.append("g").attr("class", "nodes");
+        
+        // Create detail panel
+        this.detailPanel = d3.select(this.container)
+          .append("div")
+          .attr("class", "detail-panel")
+          .style("position", "absolute")
+          .style("right", "20px")
+          .style("top", "20px")
+          .style("width", "300px")
+          .style("background", "rgba(255,255,255,0.9)")
+          .style("border-radius", "5px")
+          .style("padding", "15px")
+          .style("box-shadow", "0 2px 10px rgba(0,0,0,0.2)")
+          .style("display", "none");
+      }
+      
+      renderGraph(graph) {
+        this.graph = graph;
+        
+        if (!this.simulation) {
+          this.initializeVisualization();
+        }
+        
+        // Stop existing simulation if it exists
+        if (this.simulation) {
+          this.simulation.stop();
+        }
+        
+        // Create force simulation
+        this.simulation = d3.forceSimulation(graph.nodes)
+          .force("link", d3.forceLink(graph.links)
+            .id(d => d.id)
+            .distance(d => 150 * (1 - d.strength))) // Stronger links = closer nodes
+          .force("charge", d3.forceManyBody().strength(-200))
+          .force("center", d3.forceCenter(this.width / 2, this.height / 2))
+          .force("collision", d3.forceCollide().radius(d => 20 + d.size));
+          
+        // Create links
+        this.links = this.linkGroup
+          .selectAll("line")
+          .data(graph.links)
+          .join("line")
+          .attr("stroke-width", d => Math.max(1, d.strength * 5))
+          .attr("stroke", "rgba(100,100,100,0.5)");
+        
+        // Create nodes
+        this.nodes = this.nodeGroup
+          .selectAll("circle")
+          .data(graph.nodes)
+          .join("circle")
+          .attr("r", d => 5 + d.size)
+          .attr("fill", "steelblue")
+          .attr("stroke", "#fff")
+          .attr("stroke-width", 1.5)
+          .call(this.drag(this.simulation))
+          .on("click", (event, d) => this.selectNode(d));
+        
+        // Add node labels
+        this.labels = this.nodeGroup
+          .selectAll("text")
+          .data(graph.nodes)
+          .join("text")
+          .attr("dx", 10)
+          .attr("dy", ".35em")
+          .text(d => d.label.substring(0, 20) + '...')
+          .style("font-size", "10px")
+          .style("opacity", 0.7);
+        
+        // Update simulation on tick
+        this.simulation.on("tick", () => {
+          this.links
+            .attr("x1", d => d.source.x)
+            .attr("y1", d => d.source.y)
+            .attr("x2", d => d.target.x)
+            .attr("y2", d => d.target.y);
+          
+          this.nodes
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+          
+          this.labels
+            .attr("x", d => d.x)
+            .attr("y", d => d.y);
+        });
+      }
+      
+      // Implement drag functionality
+      drag(simulation) {
+        function dragstarted(event) {
+          if (!event.active) simulation.alphaTarget(0.3).restart();
+          event.subject.fx = event.subject.x;
+          event.subject.fy = event.subject.y;
+        }
+        
+        function dragged(event) {
+          event.subject.fx = event.x;
+          event.subject.fy = event.y;
+        }
+        
+        function dragended(event) {
+          if (!event.active) simulation.alphaTarget(0);
+          event.subject.fx = null;
+          event.subject.fy = null;
+        }
+        
+        return d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended);
+      }
+      
+      // Handle node selection and detail view
+      selectNode(node) {
+        this.selectedNode = node;
+        
+        // Calculate node activations (confabulation spreading)
+        this.nodeActivation = ConfabulationEngine.activateNodes(
+          this.graph, 
+          node.id,
+          0.3,  // Activation threshold
+          2     // Spreading steps
+        );
+        
+        // Update visual appearance based on activation
+        this.nodes.attr("fill", d => {
+          const activation = this.nodeActivation[d.id] || 0;
+          if (d.id === node.id) return "#ff3e00"; // Selected node
+          if (activation > 0.5) return "#ff9e00"; // Strongly activated
+          if (activation > 0.2) return "#ffce00"; // Weakly activated
+          return "steelblue"; // Not activated
+        });
+        
+        // Update link appearance
+        this.links.attr("stroke", d => {
+          const sourceActivation = this.nodeActivation[d.source.id] || 0;
+          const targetActivation = this.nodeActivation[d.target.id] || 0;
+          if (sourceActivation > 0.3 && targetActivation > 0.3) {
+            return "rgba(255,100,50,0.7)"; // Activated pathway
+          }
+          return "rgba(100,100,100,0.3)"; // Inactive pathway
+        });
+        
+        // Update detail panel
+        this.detailPanel
+          .style("display", "block")
+          .html(`
+            <h3>${node.label}</h3>
+            <div style="max-height: 300px; overflow-y: auto;">
+              <p>${node.content}</p>
+            </div>
+            <h4>Related Concepts:</h4>
+            <ul>
+              ${this.getRelatedNodes(node).map(related => 
+                `<li>${related.label} (${(related.activation * 100).toFixed(0)}%)</li>`
+              ).join('')}
+            </ul>
+          `);
+      }
+      
+      // Find related nodes based on activation levels
+      getRelatedNodes(node) {
+        return this.graph.nodes
+          .filter(n => n.id !== node.id && this.nodeActivation[n.id] > 0.2)
+          .map(n => ({
+            ...n,
+            activation: this.nodeActivation[n.id]
+          }))
+          .sort((a, b) => b.activation - a.activation)
+          .slice(0, 5); // Show top 5 related nodes
+      }
+      
+      // Update the visualization with new data
+      updateGraph(newGraph) {
+        if (!newGraph) return;
+        
+        // Merge with existing graph if it exists
+        if (this.graph) {
+          // Preserve existing node positions for smoother transitions
+          newGraph.nodes.forEach(node => {
+            const existingNode = this.graph.nodes.find(n => n.id === node.id);
+            if (existingNode) {
+              node.x = existingNode.x;
+              node.y = existingNode.y;
+              node.vx = existingNode.vx;
+              node.vy = existingNode.vy;
+            }
+          });
+        }
+        
+        // Render the updated graph
+        this.renderGraph(newGraph);
+      }
+    }
+
+    // =====================================================================
+    // 4. APPLICATION CONTROLLER - Ties everything together
+    // =====================================================================
+
+    class TextScapeApp {
+      constructor() {
+        this.knowledgeUnits = [];
+        this.knowledgeGraph = null;
+        this.visualizer = null;
+      }
+      
+      async initialize(containerId) {
+        // Initialize visualizer
+        this.visualizer = new TextScapeVisualizer(containerId);
+        
+        // Set up UI event listeners
+        this.setupEventListeners();
+        
+        // Show welcome message
+        this.showMessage("Welcome to TextScape! Upload files or paste text to begin.", "info");
+      }
+      
+      setupEventListeners() {
+        // File upload handler
+        document.getElementById('fileUpload').addEventListener('change', async (event) => {
+          const files = event.target.files;
+          if (files.length === 0) return;
+          
+          try {
+            await this.processFiles(files);
+          } catch (error) {
+            console.error("Error processing files:", error);
+            this.showMessage("Error processing files: " + error.message, "error");
+          }
+        });
+        
+        // Text input handler
+        document.getElementById('addTextBtn').addEventListener('click', () => {
+          const textInput = document.getElementById('textInput');
+          const text = textInput.value.trim();
+          
+          if (!text) {
+            this.showMessage("Please enter some text first", "info");
+            return;
+          }
+          
+          try {
+            this.processRawText(text);
+            textInput.value = ''; // Clear the input area
+          } catch (error) {
+            console.error("Error processing text:", error);
+            this.showMessage("Error processing text: " + error.message, "error");
+          }
+        });
+        
+        // Search functionality
+        document.getElementById('searchInput')?.addEventListener('input', (event) => {
+          const searchTerm = event.target.value.toLowerCase();
+          if (!searchTerm) return this.resetSearch();
+          
+          this.performSearch(searchTerm);
+        });
+      }
+      
+      async processFiles(files) {
+        this.showMessage("Processing files...", "info");
+        
+        for (const file of files) {
+          // Determine file type
+          const fileType = this.getFileType(file.name);
+          
+          // Process the file
+          const newUnits = await TextProcessor.ingestDocument(file, fileType);
+          this.knowledgeUnits = [...this.knowledgeUnits, ...newUnits];
+          
+          this.showMessage(`Added ${newUnits.length} knowledge units from ${file.name}`, "success");
+        }
+        
+        // Generate embeddings and build knowledge graph
+        this.rebuildKnowledgeGraph();
+      }
+      
+      processRawText(text) {
+        this.showMessage("Processing text input...", "info");
+        
+        // Process the text
+        const newUnits = TextProcessor.processRawText(text);
+        this.knowledgeUnits = [...this.knowledgeUnits, ...newUnits];
+        
+        this.showMessage(`Added ${newUnits.length} knowledge units from text input`, "success");
+        
+        // Rebuild the knowledge graph
+        this.rebuildKnowledgeGraph();
+      }
+      
+      getFileType(filename) {
+        const extension = filename.split('.').pop().toLowerCase();
+        
+        switch (extension) {
+          case 'md':
+            return 'markdown';
+          case 'txt':
+            return 'text';
+          // Additional types can be added here
+          default:
+            return 'text';
+        }
+      }
+      
+      rebuildKnowledgeGraph() {
+        if (this.knowledgeUnits.length === 0) return;
+        
+        // Generate embeddings
+        const embeddedUnits = ConfabulationEngine.generateEmbeddings(this.knowledgeUnits);
+        
+        // Build association matrix
+        const associationMatrix = ConfabulationEngine.buildAssociationMatrix(embeddedUnits);
+        
+        // Generate graph structure
+        this.knowledgeGraph = ConfabulationEngine.generateKnowledgeGraph(
+          embeddedUnits,
+          associationMatrix
+        );
+        
+        // Render the graph
+        this.visualizer.updateGraph(this.knowledgeGraph);
+        
+        this.showMessage(`Knowledge graph built with ${this.knowledgeGraph.nodes.length} nodes and ${this.knowledgeGraph.links.length} connections`, "success");
+      }
+      
+      performSearch(searchTerm) {
+        if (!this.knowledgeGraph) return;
+        
+        // Find nodes matching search term
+        const matchingNodes = this.knowledgeGraph.nodes.filter(node => 
+          node.content.toLowerCase().includes(searchTerm)
+        );
+        
+        if (matchingNodes.length === 0) {
+          this.showMessage("No matches found", "info");
+          return;
+        }
+        
+        // Highlight matching nodes
+        this.visualizer.nodes.attr("fill", d => {
+          if (matchingNodes.find(n => n.id === d.id)) {
+            return "#ff3e00"; // Matching node
+          }
+          return "steelblue"; // Non-matching
+        });
+        
+        this.showMessage(`Found ${matchingNodes.length} matching nodes`, "success");
+      }
+      
+      resetSearch() {
+        if (!this.visualizer) return;
+        this.visualizer.nodes.attr("fill", "steelblue");
+      }
+      
+      showMessage(message, type = 'info') {
+        const messageDiv = document.getElementById('messages');
+        if (!messageDiv) return;
+        
+        const messageElement = document.createElement('div');
+        messageElement.className = `message message-${type}`;
+        messageElement.textContent = message;
+        
+        messageDiv.appendChild(messageElement);
+        
+        // Remove after a delay
+        setTimeout(() => {
+          messageElement.style.opacity = '0';
+          setTimeout(() => messageElement.remove(), 500);
+        }, 3000);
+      }
+    }
+
+    // Initialize the app when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      const app = new TextScapeApp();
+      app.initialize('graphContainer');
+    });
+  </script>
+</body>
+</html>
