@@ -27,7 +27,7 @@ TextScape transforms your written content into a navigable knowledge graph, leve
 
 1. **Clone this repo**
    ```fish
-   git clone https://github.com/<your-username>/textscape.git
+   git clone https://github.com/Innomen/textscape.git
    cd textscape
    ```
 
