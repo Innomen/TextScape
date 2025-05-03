@@ -16,7 +16,8 @@ TextScape transforms your written content into a navigable knowledge graph, leve
 
 ---
 
-![image](https://github.com/user-attachments/assets/911c19f8-b30c-491f-afb3-0fe21adc9c7a)
+![image](https://github.com/user-attachments/assets/6bb8eed4-bf61-4bc1-adc1-a3a1dc1ca9fc)
+
 
 
 
