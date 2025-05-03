@@ -79,5 +79,5 @@ For full details, see comments in `text_scape.html`.
 
 ## License
 
-MIT License © Your Name
+MIT License © Innomen
 
